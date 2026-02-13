@@ -1,0 +1,220 @@
+.kyc-container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.kyc-header {
+    margin-bottom: 2.5rem;
+}
+
+.kyc-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.kyc-header p {
+    color: var(--text-secondary);
+}
+
+/* Stepper Component */
+.kyc-stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    padding: 0 1rem;
+}
+
+.stepper-line {
+    position: absolute;
+    top: 20px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+}
+
+.stepper-line-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--accent-gold);
+    box-shadow: 0 0 10px var(--accent-gold-glow);
+    transition: width 0.4s ease;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+
+.step-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--text-secondary);
+    transition: 0.3s;
+}
+
+.step-item.active .step-number {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: var(--bg-primary);
+    box-shadow: 0 0 20px var(--accent-gold-glow);
+}
+
+.step-item.completed .step-number {
+    background: #00E5FF;
+    border-color: #00E5FF;
+    color: var(--bg-primary);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: 0.3s;
+}
+
+.step-item.active .step-label {
+    color: #FFD200;
+}
+
+/* Form Card */
+.kyc-form-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+}
+
+.form-step-title {
+    font-size: 1.8rem;
+    color: #FFD200;
+    margin-bottom: 2rem;
+}
+
+/* Upload Section */
+.upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.photo-placeholder {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 210, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+    background: rgba(255, 210, 0, 0.02);
+    transition: 0.3s ease;
+}
+
+.photo-placeholder:hover {
+    border-color: var(--accent-gold);
+    background: rgba(255, 210, 0, 0.05);
+}
+
+
+.upload-btn {
+    margin-bottom: 1.5rem;
+}
+
+.upload-note {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Input Styles for Steps 2, 3, 4 */
+.kyc-input-group {
+    margin-bottom: 1.5rem;
+}
+
+.kyc-input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.kyc-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: white;
+    font-size: 1rem;
+    transition: 0.3s;
+}
+
+.kyc-input:focus {
+    outline: none;
+    border-color: #FFD200;
+    background: rgba(255, 210, 0, 0.05);
+    box-shadow: 0 0 15px rgba(255, 210, 0, 0.1);
+}
+
+.nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    color: white;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .kyc-stepper {
+        gap: 5px;
+    }
+
+    .step-label {
+        display: none;
+    }
+
+    .kyc-form-card {
+        padding: 1.5rem;
+    }
+
+    .form-step-title {
+        font-size: 1.5rem;
+    }
+}

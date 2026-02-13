@@ -1,0 +1,377 @@
+.withdrawal-container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.withdrawal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.withdrawal-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.header-welcome {
+    color: var(--text-secondary);
+}
+
+/* Alert Bar */
+.warning-alert {
+    background: rgba(255, 174, 0, 0.05);
+    border: 1px solid rgba(255, 174, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.warning-icon {
+    color: #FFAE00;
+}
+
+.warning-text h4 {
+    color: #FFAE00;
+    margin-bottom: 4px;
+}
+
+.warning-text p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Withdrawal Stats Grid */
+.withdrawal-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.withdraw-stat-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.withdraw-stat-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+/* Specific Glow Effects for Stat Cards */
+.withdraw-stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, var(--glow-color, transparent), transparent 70%);
+    opacity: 0;
+    transition: 0.4s ease;
+    pointer-events: none;
+}
+
+.withdraw-stat-card:hover::after {
+    opacity: 0.15;
+}
+
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.2rem;
+}
+
+.stat-card-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.stat-card-header p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.stat-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.withdraw-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 1.5rem;
+    right: 1.5rem;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.stat-progress-fill {
+    height: 100%;
+}
+
+/* Two Column Layout */
+.withdrawal-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.request-card,
+.history-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2rem;
+}
+
+.section-title {
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Source Selection */
+.source-selection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.source-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.source-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 229, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.source-card.active {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: var(--accent-teal);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+    transform: scale(1.03);
+}
+
+
+.source-card h4 {
+    font-size: 0.85rem;
+    margin: 10px 0 5px;
+}
+
+.source-card p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.8rem;
+}
+
+.form-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+}
+
+.input-container {
+    position: relative;
+}
+
+.withdraw-input:focus {
+    outline: none;
+    border-color: var(--accent-teal);
+    background: rgba(0, 229, 255, 0.03);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+}
+
+.max-btn:hover {
+    transform: translateY(-50%) scale(1.1);
+    filter: brightness(1.2);
+    box-shadow: 0 0 10px var(--accent-gold-glow);
+}
+
+
+.max-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.method-btn {
+    width: 100%;
+    background: rgba(0, 229, 255, 0.03);
+    border: 1px solid var(--accent-teal);
+    border-radius: 12px;
+    padding: 14px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.method-btn:hover {
+    background: rgba(0, 229, 255, 0.08);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+
+.fee-note-box {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 210, 0, 0.03);
+    border: 1px solid rgba(255, 210, 0, 0.1);
+    border-radius: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* History Table */
+.withdrawal-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.withdrawal-history-table th {
+    text-align: left;
+    padding: 12px 1rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--card-border);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.empty-history {
+    padding: 6rem 0;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.empty-history p {
+    margin-top: 15px;
+    font-size: 1.1rem;
+}
+
+/* Extra Footer Stats */
+.withdrawal-footer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.footer-stat-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.3s;
+}
+
+.footer-stat-card:hover {
+    transform: scale(1.05);
+    border-color: rgba(255, 210, 0, 0.3);
+    background: rgba(255, 210, 0, 0.05);
+}
+
+
+.footer-stat-info h4 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.footer-stat-info p {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1200px) {
+    .withdrawal-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .withdrawal-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .withdrawal-header {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .withdrawal-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .withdrawal-footer-grid {
+        grid-template-columns: 1fr;
+    }
+}

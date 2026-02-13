@@ -1,0 +1,138 @@
+.transactions-container {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.transactions-header {
+    margin-bottom: 2.5rem;
+}
+
+.transactions-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.transactions-header p {
+    color: var(--text-secondary);
+}
+
+.filter-bar {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.25rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-tab {
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+}
+
+.filter-tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.filter-tab.active {
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    box-shadow: 0 0 15px var(--accent-gold-glow);
+}
+
+.search-container {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+}
+
+.search-container input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    padding: 10px 1rem 10px 2.8rem;
+    border-radius: 10px;
+    color: white;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.transactions-table-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.transactions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transactions-table th {
+    text-align: left;
+    padding: 1.25rem 2rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.no-transactions {
+    padding: 8rem 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.no-transactions p {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-container {
+        max-width: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .filter-tabs {
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    .filter-tab {
+        white-space: nowrap;
+    }
+}
