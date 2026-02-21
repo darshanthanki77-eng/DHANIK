@@ -9,7 +9,9 @@ import {
     ChevronRight,
     ChevronLeft,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    ShieldCheck,
+    Lock
 } from 'lucide-react';
 import './KYC.css';
 
@@ -22,6 +24,7 @@ const steps = [
 
 const KYC = () => {
     const [currentStep, setCurrentStep] = useState(1);
+    const [isSubmitted, setIsSubmitted] = useState(false);
     const [formData, setFormData] = useState({
         aadharNumber: '',
         panNumber: '',
@@ -30,7 +33,14 @@ const KYC = () => {
         ifscCode: ''
     });
 
-    const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
+    const nextStep = () => {
+        if (currentStep === 4) {
+            setIsSubmitted(true);
+        } else {
+            setCurrentStep(prev => Math.min(prev + 1, 4));
+        }
+    };
+
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
     const handleInputChange = (e) => {
@@ -44,24 +54,22 @@ const KYC = () => {
                 return (
                     <motion.div
                         key="step1"
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        className="upload-area"
+                        exit={{ opacity: 0, x: -30 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        className="upload-area-prime"
                     >
-                        <div className="photo-placeholder">
-                            <User size={120} style={{ opacity: 0.1 }} />
-                            <p style={{ fontSize: '1rem', marginTop: '15px' }}>Click or drag to upload</p>
-                        </div>
-                        <button className="btn-primary shimmer-btn upload-btn">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Upload size={18} />
-                                Upload Photo
+                        <div className="photo-placeholder-prime">
+                            <div className="avatar-preview">
+                                <User size={80} style={{ opacity: 0.2 }} />
+                                <div className="plus-icon-overlay"><Upload size={20} /></div>
                             </div>
-                        </button>
+                            <p>Click or drag to upload Profile Photo</p>
+                        </div>
                         <div className="upload-note">
-                            <p>Please upload a clear, recent photo of yourself</p>
-                            <p style={{ fontSize: '0.75rem', marginTop: '5px', opacity: 0.6 }}>Max file size: 5MB | Supported formats: JPG, PNG</p>
+                            <p>Please upload a clear, front-facing photo.</p>
+                            <p style={{ fontSize: '0.75rem', opacity: 0.6 }}>Max 5MB (JPG, PNG)</p>
                         </div>
                     </motion.div>
                 );
@@ -69,30 +77,37 @@ const KYC = () => {
                 return (
                     <motion.div
                         key="step2"
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
+                        exit={{ opacity: 0, x: -30 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div className="kyc-input-group">
                             <label>Full Name (as per Aadhar)</label>
-                            <input type="text" className="kyc-input" placeholder="Enter your full name" />
+                            <div className="prime-input-wrapper">
+                                <User size={18} className="input-icon" />
+                                <input type="text" className="kyc-input-prime" placeholder="Enter your full name" />
+                            </div>
                         </div>
                         <div className="kyc-input-group">
                             <label>Aadhar Number</label>
-                            <input
-                                type="text"
-                                name="aadharNumber"
-                                className="kyc-input"
-                                placeholder="12-digit Aadhar number"
-                                value={formData.aadharNumber}
-                                onChange={handleInputChange}
-                            />
+                            <div className="prime-input-wrapper">
+                                <CreditCard size={18} className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="aadharNumber"
+                                    className="kyc-input-prime"
+                                    placeholder="12-digit Aadhar number"
+                                    value={formData.aadharNumber}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
                         </div>
                         <div className="kyc-input-group">
-                            <label>Upload Aadhar Card (Front & Back)</label>
-                            <div className="upload-area" style={{ padding: '2rem', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '16px' }}>
-                                <Upload size={32} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                                <button className="btn-outline" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'white' }}>Select Files</button>
+                            <label>Upload Aadhar Card</label>
+                            <div className="mini-upload-grid">
+                                <div className="mini-upload-box">Front Side</div>
+                                <div className="mini-upload-box">Back Side</div>
                             </div>
                         </div>
                     </motion.div>
@@ -101,26 +116,30 @@ const KYC = () => {
                 return (
                     <motion.div
                         key="step3"
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
+                        exit={{ opacity: 0, x: -30 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div className="kyc-input-group">
                             <label>PAN Card Number</label>
-                            <input
-                                type="text"
-                                name="panNumber"
-                                className="kyc-input"
-                                placeholder="Enter 10-digit PAN"
-                                value={formData.panNumber}
-                                onChange={handleInputChange}
-                            />
+                            <div className="prime-input-wrapper">
+                                <FileText size={18} className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="panNumber"
+                                    className="kyc-input-prime"
+                                    placeholder="Enter 10-digit PAN"
+                                    value={formData.panNumber}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
                         </div>
                         <div className="kyc-input-group">
                             <label>Upload PAN Card Copy</label>
-                            <div className="upload-area" style={{ padding: '2rem', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '16px' }}>
-                                <Upload size={32} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                                <button className="btn-outline" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'white' }}>Select Files</button>
+                            <div className="upload-area-prime dashed">
+                                <Upload size={32} style={{ opacity: 0.2 }} />
+                                <span>Select PAN Card Image</span>
                             </div>
                         </div>
                     </motion.div>
@@ -129,39 +148,43 @@ const KYC = () => {
                 return (
                     <motion.div
                         key="step4"
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
+                        exit={{ opacity: 0, x: -30 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div className="kyc-input-group">
                             <label>Bank Name</label>
-                            <input
-                                type="text"
-                                name="bankName"
-                                className="kyc-input"
-                                placeholder="e.g. HDFC Bank"
-                                value={formData.bankName}
-                                onChange={handleInputChange}
-                            />
+                            <div className="prime-input-wrapper">
+                                <Building2 size={18} className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="bankName"
+                                    className="kyc-input-prime"
+                                    placeholder="e.g. HDFC Bank"
+                                    value={formData.bankName}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
                         </div>
-                        <div className="kyc-input-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div>
+                        <div className="kyc-input-row">
+                            <div className="kyc-input-group">
                                 <label>Account Number</label>
                                 <input
                                     type="text"
                                     name="accountNumber"
-                                    className="kyc-input"
+                                    className="kyc-input-prime"
                                     placeholder="Account Number"
                                     value={formData.accountNumber}
                                     onChange={handleInputChange}
                                 />
                             </div>
-                            <div>
+                            <div className="kyc-input-group">
                                 <label>IFSC Code</label>
                                 <input
                                     type="text"
                                     name="ifscCode"
-                                    className="kyc-input"
+                                    className="kyc-input-prime"
                                     placeholder="IFSC Code"
                                     value={formData.ifscCode}
                                     onChange={handleInputChange}
@@ -169,10 +192,10 @@ const KYC = () => {
                             </div>
                         </div>
                         <div className="kyc-input-group">
-                            <label>Upload Cancelled Cheque / Passbook Copy</label>
-                            <div className="upload-area" style={{ padding: '2rem', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '16px' }}>
-                                <Upload size={32} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                                <button className="btn-outline" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'white' }}>Select Files</button>
+                            <label>Upload Passbook / Cheque</label>
+                            <div className="upload-area-prime dashed">
+                                <Building2 size={32} style={{ opacity: 0.2 }} />
+                                <span>Select Document</span>
                             </div>
                         </div>
                     </motion.div>
@@ -182,15 +205,57 @@ const KYC = () => {
         }
     };
 
+    if (isSubmitted) {
+        return (
+            <div className="kyc-container">
+                <motion.div
+                    className="kyc-success-view"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                >
+                    <div className="success-icon-lottie">
+                        <CheckCircle2 size={120} color="#00E5FF" />
+                    </div>
+                    <h2>KYC Submitted <span className="gold-glow-text">Successfully!</span></h2>
+                    <p>Your documents are under review. This usually takes 24-48 hours. We will notify you once verified.</p>
+                    <div className="review-steps">
+                        <div className="review-step-item">
+                            <div className="step-dot active"></div>
+                            <span>Submitted</span>
+                        </div>
+                        <div className="review-step-item">
+                            <div className="step-dot"></div>
+                            <span>Verification in Progress</span>
+                        </div>
+                        <div className="review-step-item">
+                            <div className="step-dot"></div>
+                            <span>Account Verified</span>
+                        </div>
+                    </div>
+                    <button className="btn-primary shimmer-btn" style={{ marginTop: '2rem', padding: '12px 40px' }} onClick={() => setIsSubmitted(false)}>
+                        Return to Dashboard
+                    </button>
+                </motion.div>
+            </div>
+        );
+    }
+
     return (
         <div className="kyc-container">
             <motion.div
                 className="kyc-header"
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-                <h1>KYC <span className="gold-glow-text">Verification</span></h1>
-                <p>Complete your identity verification to unlock all platform features and withdrawals.</p>
+                <div>
+                    <h1>KYC <span className="gold-glow-text">Verification</span></h1>
+                    <p>Complete your identity verification to unlock all platform features and withdrawals.</p>
+                </div>
+                <div className="security-tag">
+                    <ShieldCheck size={16} />
+                    <span>Bank-Grade Security</span>
+                </div>
             </motion.div>
 
             <div className="kyc-stepper">
@@ -215,12 +280,13 @@ const KYC = () => {
 
             <motion.div
                 className="kyc-form-card"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
+                initial={{ opacity: 0, scale: 0.98, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 1.0, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-                <div className="form-step-title">
-                    {steps[currentStep - 1].title}
+                <div className="form-step-header">
+                    <div className="step-icon-bg">{steps[currentStep - 1].icon}</div>
+                    <h3>{steps[currentStep - 1].title}</h3>
                 </div>
 
                 <div className="step-content">
@@ -231,39 +297,23 @@ const KYC = () => {
 
                 <div className="nav-buttons">
                     <button
-                        className="btn-primary btn-secondary"
+                        className="nav-btn-back"
                         onClick={prevStep}
                         disabled={currentStep === 1}
-                        style={{ opacity: currentStep === 1 ? 0.3 : 1, pointerEvents: currentStep === 1 ? 'none' : 'auto' }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <ChevronLeft size={20} />
-                            Previous
-                        </div>
+                        <ChevronLeft size={20} />
+                        Back
                     </button>
 
-                    <button className="btn-primary shimmer-btn" onClick={nextStep}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {currentStep === 4 ? 'Submit KYC' : 'Next Step'}
-                            <ChevronRight size={20} />
-                        </div>
+                    <button className="btn-primary shimmer-btn nav-btn-next" onClick={nextStep}>
+                        {currentStep === 4 ? 'Confirm & Submit' : 'Next Step'}
+                        <ChevronRight size={20} />
                     </button>
                 </div>
 
-                {/* Info Box */}
-                <div style={{
-                    marginTop: '2rem',
-                    padding: '1rem',
-                    background: 'rgba(255, 210, 0, 0.03)',
-                    border: '1px solid rgba(255, 210, 0, 0.1)',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    gap: '12px'
-                }}>
-                    <AlertCircle size={20} style={{ color: '#FFD200', flexShrink: 0 }} />
-                    <p style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>
-                        Your data is encrypted and stored securely. Verification typically takes 24-48 business hours.
-                    </p>
+                <div className="privacy-info-box">
+                    <Lock size={16} style={{ color: '#FFD200', flexShrink: 0 }} />
+                    <p>Your documents are protected using AES-256 encryption. We never share your data with third parties.</p>
                 </div>
             </motion.div>
         </div>

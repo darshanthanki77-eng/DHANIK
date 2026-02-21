@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
     User,
@@ -8,282 +8,390 @@ import {
     DollarSign,
     IdCard,
     Search,
-    Filter,
     ChevronRight,
-    TrendingUp,
     Activity,
-    Layers
+    Layers,
+    TrendingUp,
+    ExternalLink,
+    Filter,
+    ArrowUpRight,
+    Star,
+    Award,
+    AlertCircle
 } from 'lucide-react';
 import './ReferralNetwork.css';
+import { useNavigate } from 'react-router-dom';
 
 const ReferralNetwork = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedLevel, setSelectedLevel] = useState('All');
+    const [viewMode, setViewMode] = useState('table');
+    const [network, setNetwork] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
-    const levels = [
-        { level: 1, members: 1, business: '₹0', income: '0.00', percentage: 5, performance: 10, color: '#FFD200' },
-        { level: 2, members: 0, business: '₹0', income: '0.00', percentage: 2, performance: 0, color: '#00E5FF' },
-        { level: 3, members: 0, business: '₹0', income: '0.00', percentage: 1, performance: 0, color: '#FFD200' },
-        { level: 4, members: 0, business: '₹0', income: '0.00', percentage: 1, performance: 0, color: '#00E5FF' },
-        { level: 5, members: 0, business: '₹0', income: '0.00', percentage: 1, performance: 0, color: '#FFD200' },
-        { level: 6, members: 0, business: '₹0', income: '0.00', percentage: 1, performance: 0, color: '#00E5FF' },
-        { level: 7, members: 0, business: '₹0', income: '0.00', percentage: 7.5, performance: 0, color: '#FFD200' },
-        { level: 8, members: 0, business: '₹0', income: '0.00', percentage: 5, performance: 0, color: '#00E5FF' },
-        { level: 9, members: 0, business: '₹0', income: '0.00', percentage: 2.5, performance: 0, color: '#FFD200' },
-        { level: 10, members: 0, business: '₹0', income: '0.00', percentage: 2.5, performance: 0, color: '#00E5FF' },
-    ];
+    useEffect(() => {
+        const fetchNetwork = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
 
-    const teamMembers = [
-        {
-            id: 'A',
-            name: 'Abuzar Munshi',
-            email: 'abuzarmunshi@gmail.com',
-            address: '0x0000...0000',
-            level: 1,
-            joinDate: '30 Dec 2025',
-            investment: '₹0',
-            income: '0.00',
-            percentage: 5,
-            status: 'active'
+                const response = await fetch('http://localhost:5000/api/referral/network', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setNetwork(data);
+                } else {
+                    setError('Failed to load network');
+                }
+            } catch (err) {
+                setError('Could not connect to server');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchNetwork();
+    }, [navigate]);
+
+    const levels = useMemo(() => {
+        if (!network || !network.summary || !network.levelStats) return [];
+        try {
+            return [
+                {
+                    level: 1,
+                    members: network.summary.l1Count || 0,
+                    business: (network.levelStats.l1?.business || 0).toFixed(2),
+                    income: (network.levelStats.l1?.income || 0).toFixed(2),
+                    percentage: 5,
+                    color: '#FFD200',
+                    performance: network.summary.l1Count > 0 ? 100 : 0
+                },
+                {
+                    level: 2,
+                    members: network.summary.l2Count || 0,
+                    business: (network.levelStats.l2?.business || 0).toFixed(2),
+                    income: (network.levelStats.l2?.income || 0).toFixed(2),
+                    percentage: 2,
+                    color: '#00E5FF',
+                    performance: network.summary.l2Count > 0 ? 100 : 0
+                },
+                {
+                    level: 3,
+                    members: network.summary.l3Count || 0,
+                    business: (network.levelStats.l3?.business || 0).toFixed(2),
+                    income: (network.levelStats.l3?.income || 0).toFixed(2),
+                    percentage: 1,
+                    color: '#8B5CF6',
+                    performance: network.summary.l3Count > 0 ? 100 : 0
+                },
+            ];
+        } catch (err) {
+            console.error('Levels calculation error:', err);
+            return [];
         }
-    ];
+    }, [network]);
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
+    const teamMembers = useMemo(() => {
+        if (!network) return [];
+        const flattened = [];
+
+        if (network.level1) network.level1.forEach(m => flattened.push({ ...m, level: 1 }));
+        if (network.level2) network.level2.forEach(m => flattened.push({ ...m, level: 2 }));
+        if (network.level3) network.level3.forEach(m => flattened.push({ ...m, level: 3 }));
+
+        return flattened.map(m => ({
+            id: m._id,
+            name: m.name || 'Unknown',
+            email: m.email || 'N/A',
+            address: m.referralId || 'N/A',
+            level: m.level,
+            joinDate: m.createdAt ? new Date(m.createdAt).toLocaleDateString() : 'N/A',
+            investment: `$${(m.totalInvestment || 0).toLocaleString()}`,
+            income: `${(m.income?.total || 0).toLocaleString()} DHANKI`,
+            status: m.status || 'Active',
+            rank: 'Starter'
+        }));
+    }, [network]);
+
+    const filteredMembers = useMemo(() => {
+        return teamMembers.filter(m => {
+            const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                m.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                m.address.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesLevel = selectedLevel === 'All' || m.level === parseInt(selectedLevel);
+            return matchesSearch && matchesLevel;
+        });
+    }, [searchTerm, selectedLevel, teamMembers]);
+
+    const [user, setUser] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('user') || '{}');
+        } catch (e) {
+            return {};
         }
-    };
+    });
 
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 }
-    };
+    const activeLevelsCount = levels.filter(l => l.members > 0).length;
+
+    if (loading) return (
+        <div className="loading-state" style={{ padding: '100px', textAlign: 'center', color: 'white' }}>
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ marginBottom: '20px' }}>
+                <Activity size={48} color="#FFD200" />
+            </motion.div>
+            <h3>Loading Your Network...</h3>
+        </div>
+    );
+
+    if (error) return (
+        <div className="error-state" style={{ padding: '100px', textAlign: 'center', color: 'white' }}>
+            <AlertCircle size={48} color="#FF4D4D" style={{ marginBottom: '20px' }} />
+            <h3 style={{ color: '#FF4D4D' }}>{error}</h3>
+            <button
+                onClick={() => window.location.reload()}
+                className="btn-primary shimmer-btn"
+                style={{ marginTop: '20px', padding: '10px 30px' }}
+            >
+                Try Again
+            </button>
+        </div>
+    );
 
     return (
         <div className="referral-network-container">
             <motion.div
-                className="network-header"
-                initial={{ opacity: 0, x: -20 }}
+                className="network-header-prime"
+                initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-                <h1>Referral <span className="gold-glow-text">Network</span></h1>
-                <p>Manage and track your referral network growth. View all levels of your downline team and their performance.</p>
-            </motion.div>
-
-            {/* Profile Info Card */}
-            <motion.div
-                className="profile-info-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-            >
-                <div className="section-label">
-                    <h2>Your Profile Information</h2>
-                    <p>Complete overview of your referral network account</p>
+                <div className="header-content">
+                    <h1>Referral <span className="gold-glow-text">Network</span></h1>
+                    <p>Track your team growth, monitor multi-level performance, and skyrocket your earnings.</p>
                 </div>
-
-                <div className="profile-stats-row">
-                    <div className="p-stat-item">
-                        <div className="p-stat-header"><div className="p-stat-icon"><IdCard size={14} /></div> User ID</div>
-                        <div className="p-stat-value">3A21FC09</div>
+                <div className="quick-network-stats">
+                    <div className="q-stat">
+                        <span className="q-label">Active Levels</span>
+                        <span className="q-value">{activeLevelsCount}/3</span>
                     </div>
-                    <div className="p-stat-item">
-                        <div className="p-stat-header"><div className="p-stat-icon"><User size={14} /></div> Full Name</div>
-                        <div className="p-stat-value">Abuzar Munshi</div>
-                    </div>
-                    <div className="p-stat-item">
-                        <div className="p-stat-header"><div className="p-stat-icon"><Mail size={14} /></div> Email Address</div>
-                        <div className="p-stat-value">zarwebcoders@g...</div>
-                    </div>
-                    <div className="p-stat-item">
-                        <div className="p-stat-header"><div className="p-stat-icon"><Users size={14} /></div> Total Network</div>
-                        <div className="p-stat-value">1</div>
-                    </div>
-                    <div className="p-stat-item">
-                        <div className="p-stat-header"><div className="p-stat-icon"><Briefcase size={14} /></div> Overall Business</div>
-                        <div className="p-stat-value">₹0</div>
-                    </div>
-                    <div className="p-stat-item">
-                        <div className="p-stat-header"><div className="p-stat-icon" style={{ color: '#00E5FF' }}><DollarSign size={14} /></div> Total Level Income</div>
-                        <div className="p-stat-value gold-glow-text">₹0.00</div>
+                    <div className="q-divider"></div>
+                    <div className="q-stat">
+                        <span className="q-label">Total Team</span>
+                        <span className="q-value">{network?.summary?.totalTeam || 0}</span>
                     </div>
                 </div>
             </motion.div>
 
-            {/* Performance Section */}
-            <div className="performance-section-header">
-                <div className="section-label">
-                    <h2>Your Network Performance</h2>
-                    <p>Detailed breakdown of your network by levels</p>
-                </div>
-                <div className="active-levels-badge">
-                    <Layers size={16} />
-                    Active Levels: 1
-                </div>
-            </div>
-
+            {/* User Profile Card */}
             <motion.div
-                className="network-summary-card"
-                initial={{ opacity: 0, y: 20 }}
+                className="user-network-card"
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             >
-                <div className="summary-table-header">
-                    <span>Level</span>
-                    <span>Members</span>
-                    <span>Business Volume</span>
-                    <span>Level Income (%)</span>
-                    <span>Performance</span>
+                <div className="user-profile-header">
+                    <div className="avatar-wrapper">
+                        <div className="avatar-main">{user?.name?.[0]}</div>
+                        <div className="rank-badge"><Star size={12} fill="currentColor" /> Starter</div>
+                    </div>
+                    <div className="user-primary-info">
+                        <h3>{user?.name}</h3>
+                        <p>ID: {user?.referralId} <span className="dot-sep">•</span> {user?.email}</p>
+                    </div>
+                    <div className="network-total-income">
+                        <span className="label">Total Level Income</span>
+                        <span className="value gold-glow-text">{(network?.summary?.totalLevelIncome || 0).toLocaleString()} DHANKI</span>
+                    </div>
                 </div>
 
-                <div className="levels-list">
-                    {levels.map((lvl) => (
-                        <div key={lvl.level} className="level-row">
-                            <div className="level-info">
-                                <div className="level-badge" style={{
-                                    background: `linear-gradient(135deg, ${lvl.color} 0%, ${lvl.color}CC 100%)`,
-                                    boxShadow: `0 4px 15px ${lvl.color}44`
-                                }}>
-                                    L{lvl.level}
-                                </div>
-                                <div className="level-details">
-                                    <h4>Level {lvl.level}</h4>
-                                    <p>{lvl.members} members</p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <span style={{ fontWeight: 700 }}>{lvl.members}</span>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginLeft: '5px' }}>members</span>
-                            </div>
-
-                            <div className="business-vol">
-                                <span style={{ fontWeight: 700 }}>{lvl.business}</span>
-                                {lvl.members > 0 && <span style={{ color: '#10B981', fontSize: '0.7rem' }}>● Active level</span>}
-                            </div>
-
-                            <div className="income-info">
-                                <span style={{ fontWeight: 700, color: '#00E5FF' }}>₹{lvl.income}</span>
-                                <span style={{ color: '#FFD200', fontSize: '0.7rem' }}>{lvl.percentage}% of business</span>
-                            </div>
-
-                            <div className="performance-bar-wraper">
-                                <div className="perf-label">
-                                    <span>Activity</span>
-                                    <span style={{ fontWeight: 700 }}>{lvl.performance}%</span>
-                                </div>
-                                <div className="perf-bar-bg">
-                                    <motion.div
-                                        className="perf-bar-fill"
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${lvl.performance}%` }}
-                                        style={{ background: lvl.color }}
-                                    />
-                                </div>
-                            </div>
+                <div className="profile-stats-grid-prime">
+                    <div className="p-stat-card-prime">
+                        <div className="icon" style={{ background: 'rgba(255, 210, 0, 0.1)', color: '#FFD200' }}><IdCard size={20} /></div>
+                        <div className="info">
+                            <label>Sponsor ID</label>
+                            <p>{user?.referredBy || 'System'}</p>
                         </div>
+                    </div>
+                    <div className="p-stat-card-prime">
+                        <div className="icon" style={{ background: 'rgba(0, 229, 255, 0.1)', color: '#00E5FF' }}><Users size={20} /></div>
+                        <div className="info">
+                            <label>Direct Members</label>
+                            <p>{network?.summary?.l1Count || 0} Active</p>
+                        </div>
+                    </div>
+                    <div className="p-stat-card-prime">
+                        <div className="icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' }}><Briefcase size={20} /></div>
+                        <div className="info">
+                            <label>Total Business</label>
+                            <p>${(network?.summary?.totalBusiness || 0).toFixed(2)}</p>
+                        </div>
+                    </div>
+                    <div className="p-stat-card-prime">
+                        <div className="icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}><TrendingUp size={20} /></div>
+                        <div className="info">
+                            <label>Network Growth</label>
+                            <p>+0.0%</p>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Levels Breakdown */}
+            <div className="level-breakdown-section">
+                <div className="section-header">
+                    <div className="title-area">
+                        <h2>Level <span className="gold-glow-text">Performance</span></h2>
+                        <p>Detailed performance analytics across all 10 levels</p>
+                    </div>
+                </div>
+
+                <div className="levels-scroller">
+                    {levels.map((lvl, idx) => (
+                        <motion.div
+                            key={lvl.level}
+                            className={`level-stat-card ${selectedLevel === lvl.level ? 'active' : ''} ${lvl.members === 0 ? 'empty' : ''}`}
+                            onClick={() => setSelectedLevel(selectedLevel === lvl.level ? 'All' : lvl.level)}
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.8, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                            whileHover={{ y: -5 }}
+                        >
+                            <div className="level-indicator" style={{ background: lvl.color }}>
+                                L{lvl.level}
+                            </div>
+                            <div className="level-main-info">
+                                <h3>{lvl.members} <span className="unit">Members</span></h3>
+                                <p className="business">Vol: {lvl.business}</p>
+                            </div>
+                            <div className="level-income-mini">
+                                <span className="pct">{lvl.percentage}%</span>
+                                <span className="val">{parseFloat(lvl.income).toLocaleString()} DHANKI</span>
+                            </div>
+                            <div className="perf-mini-bar">
+                                <div className="bar-fill" style={{ width: `${lvl.performance}%`, background: lvl.color }}></div>
+                            </div>
+                        </motion.div>
                     ))}
                 </div>
-
-                <div className="summary-footer-stats">
-                    <div className="footer-stat">
-                        <h5>Total Members</h5>
-                        <p>1</p>
-                    </div>
-                    <div className="footer-stat">
-                        <h5>Total Business Volume</h5>
-                        <p>₹0</p>
-                    </div>
-                    <div className="footer-stat">
-                        <h5>Total Level Income</h5>
-                        <p className="gold-glow-text">₹0.00</p>
-                    </div>
-                </div>
-            </motion.div>
-
-            {/* Team Members List */}
-            <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div>
-                    <h2>Team Members</h2>
-                    <p>Complete list of your downline network</p>
-                </div>
-                <div className="active-levels-badge" style={{ background: 'rgba(255, 210, 0, 0.1)' }}>
-                    Total: 1
-                </div>
             </div>
 
-            <motion.div
-                className="team-table-card"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-            >
-                <div className="table-controls">
-                    <div className="search-input-wrapper">
-                        <Search className="search-icon" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search by name, email, or wallet..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+            {/* Team Management */}
+            <div className="team-management-section">
+                <div className="section-header-flex">
+                    <div className="title-area">
+                        <h2>Team <span className="gold-glow-text">Management</span></h2>
+                        <p>Browse and manage your {selectedLevel === 'All' ? 'entire' : `Level ${selectedLevel}`} network</p>
                     </div>
-                    <select className="filter-select">
-                        <option>All Levels</option>
-                        <option>Level 1</option>
-                        <option>Level 2</option>
-                    </select>
+                    <div className="controls">
+                        <div className="search-box-prime">
+                            <Search size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by name, wallet..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="filter-dropdown-prime">
+                            <Filter size={18} />
+                            <select value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}>
+                                <option value="All">All Levels</option>
+                                {[1, 2, 3].map(l => (
+                                    <option key={l} value={l}>Level {l}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                    <table className="team-list-table">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Level</th>
-                                <th>Join Date</th>
-                                <th>Investment</th>
-                                <th>Your Income</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {teamMembers.map((member) => (
-                                <tr key={member.name}>
-                                    <td>
-                                        <div className="user-cell">
-                                            <div className="user-avatar">{member.id}</div>
-                                            <div className="user-meta">
-                                                <h5>{member.name}</h5>
-                                                <p>{member.email}</p>
-                                                <p style={{ opacity: 0.5 }}>{member.address}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span style={{ color: '#FFD200', fontWeight: 600 }}>Level {member.level}</span>
-                                    </td>
-                                    <td>{member.joinDate}</td>
-                                    <td>{member.investment}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontWeight: 700, color: '#00E5FF' }}>₹{member.income}</span>
-                                            <span style={{ fontSize: '0.7rem', color: '#FFD200' }}>{member.percentage}% of {member.investment}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="status-indicator status-active">
-                                            <Activity size={12} />
-                                            {member.status}
-                                        </div>
-                                    </td>
+                <motion.div
+                    className="team-list-card-prime"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1.0, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                >
+                    <div className="table-wrapper">
+                        <table className="team-premium-table">
+                            <thead>
+                                <tr>
+                                    <th>Member Details</th>
+                                    <th>Level</th>
+                                    <th>Rank</th>
+                                    <th>Join Date</th>
+                                    <th>Investment</th>
+                                    <th>Earnings</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </motion.div>
+                            </thead>
+                            <tbody>
+                                <AnimatePresence mode="popLayout">
+                                    {filteredMembers.map((member, idx) => (
+                                        <motion.tr
+                                            key={member.id}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 10 }}
+                                            transition={{ delay: idx * 0.05 }}
+                                        >
+                                            <td>
+                                                <div className="member-cell">
+                                                    <div className="avatar-small">{member.name.charAt(0)}</div>
+                                                    <div className="info">
+                                                        <h5>{member.name}</h5>
+                                                        <code>{member.address}</code>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span className={`level-tag l${member.level}`}>Level {member.level}</span>
+                                            </td>
+                                            <td>
+                                                <div className="rank-td">
+                                                    <Award size={14} />
+                                                    {member.rank}
+                                                </div>
+                                            </td>
+                                            <td className="date-td">{member.joinDate}</td>
+                                            <td className="invest-td">{member.investment}</td>
+                                            <td>
+                                                <div className="earn-td">
+                                                    <span className="val">{member.income}</span>
+                                                    <span className="type">Income</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span className={`status-tag ${member.status.toLowerCase()}`}>
+                                                    {member.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button className="view-more-btn">
+                                                    <ArrowUpRight size={16} />
+                                                </button>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </AnimatePresence>
+                            </tbody>
+                        </table>
+
+                        {filteredMembers.length === 0 && (
+                            <div className="empty-team-state">
+                                <Users size={48} className="empty-icon" />
+                                <h3>No Team Members Found</h3>
+                                <p>Try adjusting your search or filters to find what you're looking for.</p>
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+            </div>
         </div>
     );
 };

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Wallet,
     AlertTriangle,
@@ -15,56 +15,104 @@ import {
     CheckCircle2,
     BarChart3,
     TrendingUp,
-    ShieldAlert
+    ShieldAlert,
+    Clock,
+    ChevronRight,
+    Search,
+    RefreshCcw,
+    Info
 } from 'lucide-react';
 import './Withdrawal.css';
 
 const Withdrawal = () => {
+    const [isConnected, setIsConnected] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [activeSource, setActiveSource] = useState('Total Income');
     const [amount, setAmount] = useState('');
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [method, setMethod] = useState('Bank Transfer');
 
     const stats = [
-        { title: 'Monthly ROI', subtitle: 'Return on Investment', value: 'DH 0', icon: <TrendingUp size={18} />, color: '#FFD200', progress: 40 },
-        { title: 'Level Income ROI', subtitle: 'Level Earnings', value: '₹0', icon: <Users size={18} />, color: '#00E5FF', progress: 30 },
-        { title: 'Normal Withdrawal', subtitle: 'Available Balance', value: 'DH 0', icon: <CreditCard size={18} />, color: '#3B82F6', progress: 20 },
-        { title: 'SOS Withdrawal', subtitle: 'Emergency Fund', value: 'DH 0', icon: <ShieldAlert size={18} />, color: '#EC4899', progress: 10 },
-        { title: 'Total Withdrawal', subtitle: 'Lifetime Withdrawn', value: '₹0', icon: <CheckCircle2 size={18} />, color: '#8B5CF6', progress: 60 },
-        { title: 'Total Income', subtitle: 'Total Earnings', value: 'DH 0', icon: <DollarSign size={18} />, color: '#FCD34D', progress: 50 },
-        { title: 'Stake ROI', subtitle: 'Staking Returns', value: 'DH 0', icon: <Zap size={18} />, color: '#10B981', progress: 35 },
-        { title: 'Stake Token', subtitle: 'Staked Balance', value: 'DH 0', icon: <Lock size={18} />, color: '#F87171', progress: 15 },
+        { title: 'Monthly ROI', subtitle: 'Return on Investment', value: isConnected ? 'DH 450.25' : 'DH 0', icon: <TrendingUp size={18} />, color: '#FFD200', progress: 40 },
+        { title: 'Level Income ROI', subtitle: 'Level Earnings', value: isConnected ? '₹12,400' : '₹0', icon: <Users size={18} />, color: '#00E5FF', progress: 30 },
+        { title: 'Normal Withdrawal', subtitle: 'Available Balance', value: isConnected ? 'DH 1,250' : 'DH 0', icon: <CreditCard size={18} />, color: '#3B82F6', progress: 20 },
+        { title: 'SOS Withdrawal', subtitle: 'Emergency Fund', value: isConnected ? 'DH 500' : 'DH 0', icon: <ShieldAlert size={18} />, color: '#EC4899', progress: 10 },
+        { title: 'Total Withdrawal', subtitle: 'Lifetime Withdrawn', value: isConnected ? '₹25,800' : '₹0', icon: <CheckCircle2 size={18} />, color: '#8B5CF6', progress: 60 },
+        { title: 'Total Income', subtitle: 'Total Earnings', value: isConnected ? 'DH 8,450' : 'DH 0', icon: <DollarSign size={18} />, color: '#FCD34D', progress: 50 },
+        { title: 'Stake ROI', subtitle: 'Staking Returns', value: isConnected ? 'DH 3,150' : 'DH 0', icon: <Zap size={18} />, color: '#10B981', progress: 35 },
+        { title: 'Stake Token', subtitle: 'Staked Balance', value: isConnected ? 'DH 19,500' : 'DH 0', icon: <Lock size={18} />, color: '#F87171', progress: 15 },
     ];
+
+    const historyData = [
+        { id: 1, source: 'Total Income', amount: 'DH 500.00', date: '2026-02-15', method: 'Bank Transfer', status: 'Completed' },
+        { id: 2, source: 'Stake ROI', amount: 'DH 1,200.00', date: '2026-02-10', method: 'MetaMask', status: 'Pending' },
+        { id: 3, source: 'Level Income', amount: '₹2,500.00', date: '2026-02-05', method: 'Bank Transfer', status: 'Completed' },
+    ];
+
+    const handleConnect = () => {
+        setIsLoading(true);
+        setTimeout(() => {
+            setIsConnected(true);
+            setIsLoading(false);
+        }, 1500);
+    };
+
+    const handleWithdraw = (e) => {
+        e.preventDefault();
+        if (!amount || parseFloat(amount) <= 0) return;
+        setIsLoading(true);
+        setTimeout(() => {
+            setIsLoading(false);
+            setShowSuccess(true);
+            setAmount('');
+            setTimeout(() => setShowSuccess(false), 5000);
+        }, 2000);
+    };
 
     return (
         <div className="withdrawal-container">
             <motion.div
                 className="withdrawal-header"
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
                 <div>
                     <h1>Withdrawal <span className="gold-glow-text">Center</span></h1>
-                    <p className="header-welcome">Welcome! Manage your earnings and withdraw funds securely from your available wallets.</p>
+                    <p className="header-welcome">Welcome! Manage your earnings and withdraw funds securely to your preferred destination.</p>
                 </div>
-                <button className="btn-primary shimmer-btn" style={{ padding: '12px 24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Wallet size={18} />
-                        Connect Wallet
+                {!isConnected ? (
+                    <button className="btn-primary shimmer-btn connect-btn" onClick={handleConnect} disabled={isLoading}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Wallet size={18} />
+                            {isLoading ? 'Connecting...' : 'Connect Wallet'}
+                        </div>
+                    </button>
+                ) : (
+                    <div className="connected-status">
+                        <div className="pulse-dot active"></div>
+                        <span>MetaMask Connected: 0x7d...f2a</span>
                     </div>
-                </button>
+                )}
             </motion.div>
 
-            <motion.div
-                className="warning-alert"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-            >
-                <div className="warning-icon"><AlertTriangle size={24} /></div>
-                <div className="warning-text">
-                    <h4>Wallet Not Connected</h4>
-                    <p>Please connect your MetaMask wallet to view your withdrawal balances and transaction data from the blockchain.</p>
-                </div>
-            </motion.div>
+            <AnimatePresence>
+                {!isConnected && (
+                    <motion.div
+                        className="warning-alert"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, height: 0, margin: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <div className="warning-icon"><AlertTriangle size={24} /></div>
+                        <div className="warning-text">
+                            <h4>Wallet Connection Required</h4>
+                            <p>Please connect your crypto wallet to verify your identity and view your real-time withdrawal balances.</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="withdrawal-stats-grid">
                 {stats.map((stat, idx) => (
@@ -72,9 +120,9 @@ const Withdrawal = () => {
                         key={idx}
                         className="withdraw-stat-card"
                         style={{ '--glow-color': stat.color }}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 + idx * 0.05 }}
+                        transition={{ duration: 0.8, delay: 0.1 + idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div className="stat-card-header">
                             <div>
@@ -91,6 +139,7 @@ const Withdrawal = () => {
                                 className="stat-progress-fill"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${stat.progress}%` }}
+                                transition={{ duration: 1, delay: 0.5 }}
                                 style={{ background: stat.color }}
                             />
                         </div>
@@ -101,138 +150,222 @@ const Withdrawal = () => {
             <div className="withdrawal-main-grid">
                 <motion.div
                     className="request-card"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.5 }}
+                    initial={{ opacity: 0, scale: 0.98, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 1.0, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
-                    <h2 className="section-title"><ArrowUpRight size={22} className="gold-glow-text" /> Initial Withdrawal Request</h2>
-
-                    <div className="form-group">
-                        <label>Select Source</label>
-                        <div className="source-selection">
-                            <div
-                                className={`source-card ${activeSource === 'Total Income' ? 'active' : ''}`}
-                                onClick={() => setActiveSource('Total Income')}
-                            >
-                                <Zap size={20} className={activeSource === 'Total Income' ? 'gold-glow-text' : ''} />
-                                <h4>Total Income</h4>
-                                <p>DH 0</p>
-                            </div>
-                            <div
-                                className={`source-card ${activeSource === 'SOS' ? 'active' : ''}`}
-                                onClick={() => setActiveSource('SOS')}
-                            >
-                                <Lock size={20} className={activeSource === 'SOS' ? 'gold-glow-text' : ''} />
-                                <h4>SOS Withdrawal</h4>
-                                <p>DH 0</p>
-                            </div>
-                        </div>
+                    <div className="card-header-flex">
+                        <h2 className="section-title"><ArrowUpRight size={22} className="gold-glow-text" /> Create Request</h2>
+                        <div className="fee-info-tag">Fee: 5%</div>
                     </div>
 
-                    <div className="form-group">
-                        <label>
-                            <span>Withdrawal Amount (DH)</span>
-                            <span style={{ color: '#A855F7', fontWeight: 'bold' }}>MAX: 0</span>
-                        </label>
-                        <div className="input-container">
-                            <input
-                                type="text"
-                                className="withdraw-input"
-                                placeholder="DH 0.00"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                            />
-                            <button className="max-btn">MAX</button>
+                    <form onSubmit={handleWithdraw}>
+                        <div className="form-group-custom">
+                            <label>Select Fund Source</label>
+                            <div className="source-selection">
+                                <div
+                                    className={`source-card ${activeSource === 'Total Income' ? 'active' : ''}`}
+                                    onClick={() => setActiveSource('Total Income')}
+                                >
+                                    <div className="source-icon-box" style={{ background: 'rgba(255, 210, 0, 0.1)', color: '#FFD200' }}>
+                                        <Zap size={20} />
+                                    </div>
+                                    <div className="source-details">
+                                        <h4>Total Income</h4>
+                                        <p>{isConnected ? 'DH 1,250.00' : 'DH 0.00'}</p>
+                                    </div>
+                                    {activeSource === 'Total Income' && <CheckCircle2 size={16} className="active-check" />}
+                                </div>
+                                <div
+                                    className={`source-card ${activeSource === 'SOS' ? 'active' : ''}`}
+                                    onClick={() => setActiveSource('SOS')}
+                                >
+                                    <div className="source-icon-box" style={{ background: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' }}>
+                                        <ShieldAlert size={20} />
+                                    </div>
+                                    <div className="source-details">
+                                        <h4>SOS Fund</h4>
+                                        <p>{isConnected ? 'DH 500.00' : 'DH 0.00'}</p>
+                                    </div>
+                                    {activeSource === 'SOS' && <CheckCircle2 size={16} className="active-check" />}
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            <span>Minimum: DH 100</span>
-                            <span>Available: DH 0</span>
-                        </div>
-                    </div>
 
-                    <div className="form-group">
-                        <label>Withdrawal Method</label>
-                        <button className="method-btn">
-                            <Building2 size={20} className="gold-glow-text" />
-                            Bank Transfer
+                        <div className="form-group-custom">
+                            <label>
+                                <span>Amount to Withdraw (DH)</span>
+                                <span className="max-available">MAX: {isConnected ? '1250' : '0'}</span>
+                            </label>
+                            <div className="input-container-premium">
+                                <DollarSign size={18} className="input-icon-left" />
+                                <input
+                                    type="number"
+                                    className="withdraw-input-prime"
+                                    placeholder="0.00"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    disabled={!isConnected}
+                                />
+                                <button type="button" className="max-btn-prime" onClick={() => setAmount(isConnected ? '1250' : '')}>MAX</button>
+                            </div>
+                            <div className="input-footer-info">
+                                <span>Min: DH 100</span>
+                                <span>Est. Fee: DH {(parseFloat(amount || 0) * 0.05).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div className="form-group-custom">
+                            <label>Withdrawal Method</label>
+                            <div className="method-grid">
+                                <button
+                                    type="button"
+                                    className={`method-btn-prime ${method === 'Bank Transfer' ? 'selected' : ''}`}
+                                    onClick={() => setMethod('Bank Transfer')}
+                                >
+                                    <Building2 size={18} />
+                                    Bank Transfer
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`method-btn-prime ${method === 'MetaMask' ? 'selected' : ''}`}
+                                    onClick={() => setMethod('MetaMask')}
+                                >
+                                    <Wallet size={18} />
+                                    MetaMask (Crypto)
+                                </button>
+                            </div>
+                        </div>
+
+                        {method === 'Bank Transfer' && (
+                            <motion.div
+                                className="method-details-area"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                            >
+                                <div className="form-group-custom">
+                                    <label>Account / UPI Details</label>
+                                    <input type="text" className="withdraw-input-prime small" placeholder="Enter Account Number or UPI ID" />
+                                </div>
+                            </motion.div>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="btn-primary shimmer-btn submit-withdraw-btn"
+                            disabled={!isConnected || isLoading || !amount}
+                        >
+                            {isLoading ? 'Processing Transaction...' : 'Confirm Withdrawal Request'}
                         </button>
-                    </div>
+                    </form>
 
-                    <div className="form-group">
-                        <label>Account Number</label>
-                        <input type="text" className="withdraw-input" placeholder="Enter account number" />
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                            Please provide complete bank details for withdrawal to a different account.
-                        </p>
-                    </div>
-
-                    <button className="btn-primary shimmer-btn" style={{ width: '100%', padding: '16px' }}>
-                        Submit Withdrawal Request
-                    </button>
-
-                    <div className="fee-note-box">
-                        <Activity size={20} style={{ color: '#FFD200' }} />
-                        <p style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>
-                            Withdrawal requests are processed within 24-48 hours. A 5% processing fee applies for income withdrawal.
-                        </p>
-                    </div>
+                    <AnimatePresence>
+                        {showSuccess && (
+                            <motion.div
+                                className="success-overlay"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0 }}
+                            >
+                                <div className="success-icon-container">
+                                    <CheckCircle2 size={64} color="#00E5FF" />
+                                </div>
+                                <h3>Request Submitted!</h3>
+                                <p>Your withdrawal request is being processed. Expected arrival: 24-48 hours.</p>
+                                <button className="btn-secondary" onClick={() => setShowSuccess(false)} style={{ marginTop: '1.5rem' }}>View History</button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
 
                 <motion.div
                     className="history-card"
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 }}
+                    transition={{ duration: 1.0, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 >
-                    <h2 className="section-title"><History size={22} className="gold-glow-text" /> Withdrawal History</h2>
+                    <div className="history-header-flex">
+                        <h2 className="section-title"><History size={22} className="gold-glow-text" /> History</h2>
+                        <button className="refresh-btn-simple"><RefreshCcw size={16} /></button>
+                    </div>
 
-                    <div className="table-responsive">
-                        <table className="withdrawal-history-table">
-                            <thead>
-                                <tr>
-                                    <th>Source</th>
-                                    <th>Amount</th>
-                                    <th>Date</th>
-                                    <th>Method</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                        </table>
-                        <div className="empty-history">
-                            <div style={{ padding: '2rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '50%', width: 'fit-content', margin: '0 auto 1.5rem' }}>
-                                <DollarSign size={40} className="gold-glow-text" />
+                    <div className="table-wrapper-withdraw">
+                        {isConnected ? (
+                            <table className="withdraw-history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Source</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {historyData.map(item => (
+                                        <tr key={item.id}>
+                                            <td>
+                                                <div className="source-td">
+                                                    <span className="source-name">{item.source}</span>
+                                                    <span className="source-date">{item.date}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ fontWeight: '700' }}>{item.amount}</td>
+                                            <td className="method-td">{item.method}</td>
+                                            <td>
+                                                <span className={`status-pill ${item.status.toLowerCase()}`}>
+                                                    {item.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button className="tx-detail-btn"><Info size={14} /></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <div className="empty-history-withdraw">
+                                <div className="empty-icon-box">
+                                    <DollarSign size={40} className="gold-glow-text" />
+                                </div>
+                                <h3>No History Found</h3>
+                                <p>Connect your wallet to see past transactions</p>
                             </div>
-                            <h3>No Withdrawal History</h3>
-                            <p>Your withdrawal requests will appear here</p>
-                        </div>
+                        )}
                     </div>
                 </motion.div>
             </div>
 
             <div className="withdrawal-footer-grid">
                 <motion.div className="footer-stat-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+                    <div className="footer-stat-icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}>
+                        <CheckCircle2 size={24} />
+                    </div>
                     <div className="footer-stat-info">
                         <h4>Total Withdrawn</h4>
-                        <p>₹0</p>
+                        <p>{isConnected ? '₹25,800' : '₹0'}</p>
                     </div>
-                    <CheckCircle2 size={32} style={{ opacity: 0.1 }} />
                 </motion.div>
 
                 <motion.div className="footer-stat-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-                    <div className="footer-stat-info">
-                        <h4>Pending Withdrawals</h4>
-                        <p>₹0</p>
+                    <div className="footer-stat-icon" style={{ background: 'rgba(255, 210, 0, 0.1)', color: '#FFD200' }}>
+                        <Clock size={24} />
                     </div>
-                    <Activity size={32} style={{ opacity: 0.1 }} />
+                    <div className="footer-stat-info">
+                        <h4>Processing</h4>
+                        <p>{isConnected ? '₹1,200' : '₹0'}</p>
+                    </div>
                 </motion.div>
 
                 <motion.div className="footer-stat-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
-                    <div className="footer-stat-info">
-                        <h4>Withdrawal Fee</h4>
-                        <p>5%</p>
+                    <div className="footer-stat-icon" style={{ background: 'rgba(0, 229, 255, 0.1)', color: '#00E5FF' }}>
+                        <Zap size={24} />
                     </div>
-                    <span style={{ fontSize: '1.8rem', fontWeight: '800', color: '#00E5FF' }}>5%</span>
+                    <div className="footer-stat-info">
+                        <h4>System Fee</h4>
+                        <p>5% Native</p>
+                    </div>
                 </motion.div>
             </div>
         </div>

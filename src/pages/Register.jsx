@@ -6,20 +6,68 @@ import './Auth.css';
 
 const Register = () => {
     const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        referralCode: ''
+    });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleRegister = (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
-        // Simulate registration
-        navigate('/dashboard');
+        setError('');
+
+        if (formData.password !== formData.confirmPassword) {
+            return setError('Passwords do not match');
+        }
+
+        setLoading(true);
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                    referralCode: formData.referralCode
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data));
+
+                // Redirect based on isAdmin field (1 = Admin, 0 = User)
+                if (data.isAdmin === 1) {
+                    navigate('/dhanki-admin');
+                } else {
+                    navigate('/dashboard');
+                }
+            } else {
+                setError(data.message || 'Registration failed');
+            }
+        } catch (err) {
+            setError('Could not connect to server');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="auth-wrapper" style={{ padding: '4rem 1rem' }}>
             <motion.div
                 className="auth-card"
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                initial={{ opacity: 0, y: 30, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
                 <div className="auth-header">
                     <div className="auth-logo">
@@ -32,6 +80,12 @@ const Register = () => {
                 </div>
 
                 <form onSubmit={handleRegister}>
+                    {error && (
+                        <div style={{ color: 'var(--admin-danger)', background: 'rgba(255, 77, 77, 0.1)', padding: '12px', borderRadius: '10px', marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(255, 77, 77, 0.2)' }}>
+                            {error}
+                        </div>
+                    )}
+
                     <div className="auth-form-group">
                         <label>Full Name</label>
                         <div className="auth-input-wrapper">
@@ -39,6 +93,8 @@ const Register = () => {
                                 type="text"
                                 className="auth-input"
                                 placeholder="John Doe"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
                             />
                             <User className="auth-input-icon" size={18} />
@@ -52,6 +108,8 @@ const Register = () => {
                                 type="email"
                                 className="auth-input"
                                 placeholder="your@email.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 required
                             />
                             <Mail className="auth-input-icon" size={18} />
@@ -65,6 +123,8 @@ const Register = () => {
                                 type="password"
                                 className="auth-input"
                                 placeholder="••••••••"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 required
                             />
                             <Lock className="auth-input-icon" size={18} />
@@ -78,6 +138,8 @@ const Register = () => {
                                 type="password"
                                 className="auth-input"
                                 placeholder="••••••••"
+                                value={formData.confirmPassword}
+                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                 required
                             />
                             <ShieldCheck className="auth-input-icon" size={18} />
@@ -91,17 +153,16 @@ const Register = () => {
                                 type="text"
                                 className="auth-input"
                                 placeholder="Enter referral or sponsor code"
+                                value={formData.referralCode}
+                                onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
                             />
                             <Users className="auth-input-icon" size={18} />
                         </div>
-                        <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>
-                            Leave empty to use system default wallet address (Admin).
-                        </p>
                     </div>
 
-                    <button type="submit" className="btn-primary auth-btn shimmer-btn">
+                    <button type="submit" className="btn-primary auth-btn shimmer-btn" disabled={loading}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            Create Account
+                            {loading ? 'Creating Account...' : 'Create Account'}
                             <ArrowRight size={18} />
                         </div>
                     </button>

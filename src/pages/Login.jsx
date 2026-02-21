@@ -6,21 +6,55 @@ import './Auth.css';
 
 const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        // Simulate login
-        navigate('/dashboard');
+        setError('');
+        setLoading(true);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data));
+
+                // Redirect based on isAdmin field (1 = Admin, 0 = User)
+                if (data.isAdmin === 1) {
+                    navigate('/dhanki-admin');
+                } else {
+                    navigate('/dashboard');
+                }
+            } else {
+                setError(data.message || 'Login failed');
+            }
+        } catch (err) {
+            setError('Could not connect to server');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="auth-wrapper">
             <motion.div
                 className="auth-card"
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                initial={{ opacity: 0, y: 30, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
                 <div className="auth-header">
                     <div className="auth-logo">
@@ -33,6 +67,12 @@ const Login = () => {
                 </div>
 
                 <form onSubmit={handleLogin}>
+                    {error && (
+                        <div style={{ color: 'var(--admin-danger)', background: 'rgba(255, 77, 77, 0.1)', padding: '12px', borderRadius: '10px', marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(255, 77, 77, 0.2)' }}>
+                            {error}
+                        </div>
+                    )}
+
                     <div className="auth-form-group">
                         <label>Email Address</label>
                         <div className="auth-input-wrapper">
@@ -40,6 +80,8 @@ const Login = () => {
                                 type="email"
                                 className="auth-input"
                                 placeholder="your@email.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 required
                             />
                             <Mail className="auth-input-icon" size={18} />
@@ -56,6 +98,8 @@ const Login = () => {
                                 type={showPassword ? "text" : "password"}
                                 className="auth-input"
                                 placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
                             <Lock className="auth-input-icon" size={18} />
@@ -79,9 +123,9 @@ const Login = () => {
                         </div>
                     </div>
 
-                    <button type="submit" className="btn-primary auth-btn shimmer-btn">
+                    <button type="submit" className="btn-primary auth-btn shimmer-btn" disabled={loading}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            Login Now
+                            {loading ? 'Logging in...' : 'Login Now'}
                             <ArrowRight size={18} />
                         </div>
                     </button>

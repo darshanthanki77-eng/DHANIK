@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard,
@@ -22,16 +23,132 @@ import {
     X
 } from 'lucide-react';
 import './Dashboard.css';
-import Investments from './Investments';
-import StakeROI from './StakeROI';
-import KYC from './KYC';
-import Withdrawal from './Withdrawal';
+import BuyToken from './BuyToken';
+import LevelIncome from './LevelIncome';
+import Support from './Support';
 import ReferralNetwork from './ReferralNetwork';
-import Transactions from './Transactions';
 import Profile from './Profile';
+import { BrowserProvider } from 'ethers';
 
 const Dashboard = () => {
-    const [activeTab, setActiveTab] = useState('Dashboard');
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isWalletConnected, setIsWalletConnected] = useState(false);
+    const [walletAddress, setWalletAddress] = useState('');
+
+    const handleConnectWallet = async () => {
+        if (typeof window.ethereum !== 'undefined') {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts.length > 0) {
+                    setIsWalletConnected(true);
+                    setWalletAddress(accounts[0]);
+
+                    // Optional: persist in localStorage for visual consistency
+                    localStorage.setItem('walletAddress', accounts[0]);
+                }
+            } catch (err) {
+                console.error('Wallet connection error:', err);
+                if (err.code === 4001) {
+                    alert('Connection rejected by user.');
+                }
+            }
+        } else {
+            alert('Please install MetaMask to connect your wallet!');
+            window.open('https://metamask.io/download/', '_blank');
+        }
+    };
+
+    const handleDisconnect = () => {
+        setIsWalletConnected(false);
+        setWalletAddress('');
+        localStorage.removeItem('walletAddress');
+    };
+
+    useEffect(() => {
+        const checkConnection = async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    setIsWalletConnected(true);
+                    setWalletAddress(accounts[0]);
+                }
+
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    if (accounts.length > 0) {
+                        setWalletAddress(accounts[0]);
+                        setIsWalletConnected(true);
+                    } else {
+                        setIsWalletConnected(false);
+                        setWalletAddress('');
+                    }
+                });
+
+                window.ethereum.on('chainChanged', () => {
+                    window.location.reload();
+                });
+            }
+        };
+        checkConnection();
+
+        return () => {
+            if (window.ethereum && window.ethereum.removeListener) {
+                window.ethereum.removeListener('accountsChanged', () => { });
+                window.ethereum.removeListener('chainChanged', () => { });
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5000/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setUser(data);
+                    // Update localStorage to keep it relatively in sync
+                    localStorage.setItem('user', JSON.stringify(data));
+                } else if (response.status === 401) {
+                    navigate('/login');
+                }
+            } catch (err) {
+                console.error('Profile fetch error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, [navigate]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+    };
+
+    // Sync activeTab with URL path
+    const getActiveTabFromPath = (path) => {
+        if (path === '/buy-token') return 'Buy Token';
+        if (path === '/referral') return 'Referral';
+        if (path === '/level-income') return 'Level Income';
+        if (path === '/profile') return 'Profile';
+        if (path === '/support') return 'Support';
+        return 'Dashboard';
+    };
+
+    const activeTab = getActiveTabFromPath(location.pathname);
     const [scrolled, setScrolled] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
 
@@ -53,26 +170,25 @@ const Dashboard = () => {
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.2
+                staggerChildren: 0.15,
+                delayChildren: 0.3,
+                ease: [0.16, 1, 0.3, 1]
             }
         }
     };
 
     const itemVariants = {
         hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+        visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
     };
 
     const menuItems = [
-        { name: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        { name: 'Investments', icon: <TrendingUp size={20} /> },
-        { name: 'Stake ROI', icon: <Coins size={20} /> },
-        { name: 'KYC Verification', icon: <UserCheck size={20} /> },
-        { name: 'Withdrawal', icon: <ArrowUpRight size={20} /> },
-        { name: 'Referral Network', icon: <Users size={20} /> },
-        { name: 'Transactions', icon: <History size={20} /> },
-        { name: 'Profile', icon: <User size={20} /> },
+        { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+        { name: 'Buy Token', icon: <Coins size={20} />, path: '/buy-token' },
+        { name: 'Referral', icon: <Users size={20} />, path: '/referral' },
+        { name: 'Level Income', icon: <BarChart3 size={20} />, path: '/level-income' },
+        { name: 'Profile', icon: <User size={20} />, path: '/profile' },
+        { name: 'Support', icon: <ShieldCheck size={20} />, path: '/support' },
     ];
 
     return (
@@ -94,7 +210,7 @@ const Dashboard = () => {
                     <div className="logo-icon">
                         <Zap size={24} fill="#05090C" />
                     </div>
-                    <span className="logo-text gold-glow-text">DHANIK</span>
+                    <span className="logo-text gold-glow-text">DHANKI</span>
                 </div>
 
                 <nav className="nav-menu">
@@ -103,7 +219,7 @@ const Dashboard = () => {
                             key={item.name}
                             className={`nav-item ${activeTab === item.name ? 'active' : ''}`}
                             onClick={() => {
-                                setActiveTab(item.name);
+                                navigate(item.path);
                                 if (window.innerWidth <= 1024) setSidebarOpen(false);
                             }}
                             whileHover={{ x: 5 }}
@@ -130,7 +246,7 @@ const Dashboard = () => {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <div className="nav-item">
+                    <div className="nav-item" onClick={handleLogout}>
                         <span className="nav-icon"><LogOut size={20} /></span>
                         <span className="nav-name">Logout</span>
                     </div>
@@ -169,26 +285,31 @@ const Dashboard = () => {
                             <motion.section className="hero-card" variants={itemVariants}>
                                 <div className="hero-info">
                                     <motion.h1
-                                        initial={{ opacity: 0, x: -20 }}
+                                        initial={{ opacity: 0, x: -30 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.3 }}
+                                        transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
                                     >
-                                        Welcome back, <span className="gold-glow-text">Dhanik User</span>
+                                        Welcome, <span className="gold-glow-text">{user?.name || 'Dhanki User'}</span>
                                     </motion.h1>
-                                    <p>Manage your crypto investments and track your earnings.</p>
+                                    <p>Start your journey with Dhanki Tokenomics and earn consistent rewards.</p>
 
                                     <div className="wallet-actions">
-                                        <button className="btn-primary shimmer-btn">
+                                        <button
+                                            className={`btn-primary shimmer-btn ${isWalletConnected ? 'connected' : ''}`}
+                                            onClick={handleConnectWallet}
+                                        >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <Wallet size={18} />
-                                                Wallet Connected
+                                                {isWalletConnected ? 'Connected' : 'Connect Wallet'}
                                             </div>
                                         </button>
-                                        <button className="btn-outline">Disconnect</button>
+                                        {isWalletConnected && (
+                                            <button className="btn-outline" onClick={handleDisconnect}>Disconnect</button>
+                                        )}
                                     </div>
 
                                     <div style={{ marginTop: '20px', position: 'relative', width: '300px' }}>
-                                        <p style={{ fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '8px' }}>Referral Link</p>
+                                        <p style={{ fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '8px' }}>Your Referral Link</p>
                                         <div style={{
                                             display: 'flex',
                                             background: 'rgba(255,255,255,0.05)',
@@ -199,30 +320,55 @@ const Dashboard = () => {
                                             <input
                                                 type="text"
                                                 readOnly
-                                                value="dhanik.io/ref/User77"
+                                                value={`dhanki.io/ref/${user?.referralId || '----'}`}
                                                 style={{
                                                     background: 'transparent',
                                                     border: 'none',
                                                     color: 'white',
                                                     width: '100%',
-                                                    outline: 'none'
+                                                    outline: 'none',
+                                                    fontSize: '0.85rem'
                                                 }}
                                             />
-                                            <Copy size={18} className="gold-glow-text" style={{ cursor: 'pointer' }} />
+                                            <Copy size={18} className="gold-glow-text" style={{ cursor: 'pointer' }} onClick={() => navigator.clipboard.writeText(`dhanki.io/ref/${user?.referralId}`)} />
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="hero-balance">
                                     <div className="wallet-balance-card">
-                                        <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '8px' }}>Total Wallet Balance</p>
-                                        <span className="balance-amount gold-glow-text">$ 14,250.60</span>
+                                        <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '8px' }}>Total USDT Balance</p>
+                                        <span className="balance-amount gold-glow-text">$ {user?.wallet?.balance || '0.00'}</span>
                                         <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'flex-end' }}>
-                                            <button className="btn-primary shimmer-btn" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>Connect Wallet</button>
-                                            <button className="btn-outline" style={{ padding: '8px 12px', borderColor: 'var(--card-border)', color: 'white' }}>
+                                            <button
+                                                className="btn-primary shimmer-btn"
+                                                style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                                                onClick={handleConnectWallet}
+                                            >
+                                                {isWalletConnected ? 'Wallet Active' : 'Connect Wallet'}
+                                            </button>
+                                            <button
+                                                className="btn-outline"
+                                                style={{ padding: '8px 12px', borderColor: 'var(--card-border)', color: 'white' }}
+                                                onClick={() => {
+                                                    if (isWalletConnected) {
+                                                        navigator.clipboard.writeText(walletAddress);
+                                                        alert('Wallet address copied!');
+                                                    } else {
+                                                        handleConnectWallet();
+                                                    }
+                                                }}
+                                            >
                                                 <Copy size={16} />
                                             </button>
                                         </div>
+                                        {isWalletConnected && (
+                                            <div style={{ marginTop: '10px' }}>
+                                                <code style={{ fontSize: '0.65rem', color: '#00E5FF', opacity: 0.8, background: 'rgba(0,229,255,0.05)', padding: '4px 8px', borderRadius: '4px', display: 'inline-block' }}>
+                                                    {walletAddress}
+                                                </code>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </motion.section>
@@ -230,15 +376,17 @@ const Dashboard = () => {
                             {/* Token Overview Cards */}
                             <div className="overview-grid">
                                 {[
-                                    { label: 'DHANIK Token Balance', value: '45,280 DH', icon: <Coins />, subValue: '≈ $2,340.50' },
-                                    { label: 'Current Token Rate', value: '$0.0517', icon: <TrendingUp />, subValue: '+12.5% Monthly' },
-                                    { label: 'Investment Phase', value: 'PHASE 3', icon: <Globe />, subValue: '85% Completed' }
+                                    { label: 'Dhanki Token Balance', value: `${user?.wallet?.dhanki || 0} DHANKI`, icon: <Coins />, subValue: `≈ $${((user?.wallet?.dhanki || 0) * 0.01).toFixed(2)}`, path: '/buy-token' },
+                                    { label: 'Registration Date', value: new Date(user?.createdAt).toLocaleDateString(), icon: <TrendingUp />, subValue: 'Active Member', path: '/profile' },
+                                    { label: 'User Status', value: user?.status || 'Active', icon: <Globe />, subValue: 'Verified Account', path: '/profile' }
                                 ].map((stat, index) => (
                                     <motion.div
                                         key={index}
                                         className="stat-card"
                                         variants={itemVariants}
                                         whileHover={{ y: -10, rotate: index % 2 === 0 ? 1 : -1 }}
+                                        onClick={() => navigate(stat.path)}
+                                        style={{ cursor: 'pointer' }}
                                     >
                                         <div className="stat-icon">{stat.icon}</div>
                                         <p style={{ color: '#9CA3AF', fontSize: '0.9rem' }}>{stat.label}</p>
@@ -254,20 +402,22 @@ const Dashboard = () => {
                                     <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Income Breakdown</h2>
                                     <div className="income-grid">
                                         {[
-                                            { label: 'ROI (Retun on Investment)', value: '$1,240.50', trend: '+5.2%' },
-                                            { label: 'Yearly Bonus', value: '$500.00', trend: 'Fixed' },
-                                            { label: 'Sponsor Income', value: '$2,850.20', trend: '+18.4%' },
-                                            { label: 'Total Earnings', value: '$4,590.70', trend: 'All Time' }
+                                            { label: 'Level 1 Income', value: `$${(user?.income?.level1 || 0).toFixed(2)}`, trend: 'Direct' },
+                                            { label: 'Level 2 Income', value: `$${(user?.income?.level2 || 0).toFixed(2)}`, trend: 'Indirect' },
+                                            { label: 'Level 3 Income', value: `$${(user?.income?.level3 || 0).toFixed(2)}`, trend: 'Indirect' },
+                                            { label: 'Total Earnings', value: `$${(user?.income?.total || 0).toFixed(2)}`, trend: 'All Time' }
                                         ].map((item, idx) => (
                                             <motion.div
                                                 key={idx}
                                                 className="income-card"
                                                 whileHover={{ scale: 1.05 }}
+                                                onClick={() => navigate('/level-income')}
+                                                style={{ cursor: 'pointer' }}
                                             >
                                                 <p style={{ color: '#9CA3AF', marginBottom: '10px' }}>{item.label}</p>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                                     <h3 style={{ fontSize: '1.5rem' }}>{item.value}</h3>
-                                                    <span style={{ color: item.trend.includes('+') ? '#00E5FF' : '#F5C518', fontSize: '0.8rem' }}>{item.trend}</span>
+                                                    <span style={{ color: '#00E5FF', fontSize: '0.8rem' }}>{item.trend}</span>
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -277,7 +427,7 @@ const Dashboard = () => {
                                 {/* Mining Center */}
                                 <motion.div className="mining-card" variants={itemVariants}>
                                     <div className="mining-header">
-                                        <h3>Mining Center</h3>
+                                        <h3>Staking Rewards</h3>
                                         <div className="status-badge">
                                             <span className="pulse-dot"></span>
                                             Active
@@ -292,7 +442,7 @@ const Dashboard = () => {
                                                 strokeDasharray="283"
                                                 initial={{ strokeDashoffset: 283 }}
                                                 animate={{ strokeDashoffset: 283 - (283 * 0.998) }}
-                                                transition={{ duration: 2, delay: 1 }}
+                                                transition={{ duration: 1.5, delay: 1.2, ease: [0.16, 1, 0.3, 1] }}
                                                 strokeLinecap="round"
                                             />
                                             <defs>
@@ -310,27 +460,32 @@ const Dashboard = () => {
 
                                     <div className="mining-details">
                                         <div style={{ display: 'flex', justifyContent: 'space-between', margin: '15px 0' }}>
-                                            <span style={{ color: '#9CA3AF' }}>Monthly %</span>
-                                            <span style={{ fontWeight: 'bold' }}>8.5%</span>
+                                            <span style={{ color: '#9CA3AF' }}>Commission Share</span>
+                                            <span style={{ fontWeight: 'bold' }}>8% Total</span>
                                         </div>
                                         <div className="progress-container">
                                             <div className="progress-bar-bg">
                                                 <motion.div
                                                     className="progress-bar-fill"
                                                     initial={{ width: '0%' }}
-                                                    animate={{ width: '99.8%' }}
+                                                    animate={{ width: '8%' }}
                                                     transition={{ duration: 1.5, delay: 0.5 }}
                                                 ></motion.div>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-                                            <span style={{ color: '#9CA3AF' }}>Total Mining Income</span>
-                                            <span className="gold-glow-text" style={{ fontWeight: 'bold' }}>$840.40</span>
+                                            <span style={{ color: '#9CA3AF' }}>Max MLM Income</span>
+                                            <span className="gold-glow-text" style={{ fontWeight: 'bold' }}>8% Max</span>
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '2rem' }}>
-                                            <button className="btn-primary shimmer-btn" style={{ width: '100%' }}>Claim Stake ROI</button>
-                                            <button className="btn-outline" style={{ width: '100%', color: '#F5C518', borderColor: '#F5C518' }}>Claim ROI</button>
+                                            <button
+                                                className="btn-primary shimmer-btn"
+                                                style={{ width: '100%' }}
+                                                onClick={() => navigate('/level-income')}
+                                            >
+                                                Claim Rewards
+                                            </button>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -339,20 +494,31 @@ const Dashboard = () => {
                             {/* Referral Program */}
                             <motion.section className="referral-section" variants={itemVariants}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                    <h2>Referral Program</h2>
-                                    <button className="btn-primary shimmer-btn" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>View All Network</button>
+                                    <h2>Referral Structure (3-Levels)</h2>
+                                    <button
+                                        className="btn-primary shimmer-btn"
+                                        style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                                        onClick={() => navigate('/referral')}
+                                    >
+                                        Manage Team
+                                    </button>
                                 </div>
 
                                 <div className="referral-stats">
                                     {[
-                                        { label: 'Referral ID', value: 'DH-77821', icon: <User /> },
-                                        { label: 'Sponsor', value: 'CryptoPro_01', icon: <ShieldCheck /> },
-                                        { label: 'Direct Team', value: '42 Active', icon: <Users /> },
-                                        { label: 'Level Income', value: '$5,240', icon: <BarChart3 /> },
-                                        { label: 'Sponsor Income', value: '$1,120', icon: <Coins /> },
-                                        { label: 'Total Earned', value: '$6,360', icon: <TrendingUp /> }
+                                        { label: 'Referral ID', value: user?.referralId || '----', icon: <User /> },
+                                        { label: 'Direct Sponsor', value: user?.referredBy || 'System', icon: <ShieldCheck /> },
+                                        { label: 'Direct Team (L1)', value: `${user?.referrals?.level1?.length || 0} Active`, icon: <Users /> },
+                                        { label: 'L1 Income (5%)', value: `$${(user?.income?.level1 || 0).toFixed(2)}`, icon: <BarChart3 /> },
+                                        { label: 'L2 Income (2%)', value: `$${(user?.income?.level2 || 0).toFixed(2)}`, icon: <Activity /> },
+                                        { label: 'L3 Income (1%)', value: `$${(user?.income?.level3 || 0).toFixed(2)}`, icon: <TrendingUp /> }
                                     ].map((stat, idx) => (
-                                        <div key={idx} className="ref-stat-item">
+                                        <div
+                                            key={idx}
+                                            className="ref-stat-item"
+                                            onClick={() => navigate('/referral')}
+                                            style={{ cursor: 'pointer' }}
+                                        >
                                             <div style={{
                                                 width: '35px', height: '35px',
                                                 borderRadius: '50%',
@@ -368,103 +534,30 @@ const Dashboard = () => {
                                         </div>
                                     ))}
                                 </div>
-
-                                <div style={{ marginTop: '2rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                        <span style={{ fontSize: '0.9rem' }}>Network Progress (Level 7)</span>
-                                        <span style={{ color: '#F5C518' }}>72%</span>
-                                    </div>
-                                    <div className="progress-bar-bg">
-                                        <motion.div
-                                            className="progress-bar-fill"
-                                            initial={{ width: '0%' }}
-                                            animate={{ width: '72%' }}
-                                            transition={{ duration: 1 }}
-                                        />
-                                    </div>
-                                </div>
                             </motion.section>
                         </motion.div>
-                    ) : activeTab === 'Investments' ? (
-                        <motion.div
-                            key="investments"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <Investments />
+                    ) : activeTab === 'Buy Token' ? (
+                        <motion.div key="buy" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <BuyToken />
                         </motion.div>
-                    ) : activeTab === 'Stake ROI' ? (
-                        <motion.div
-                            key="stake-roi"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <StakeROI />
-                        </motion.div>
-                    ) : activeTab === 'KYC Verification' ? (
-                        <motion.div
-                            key="kyc"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <KYC />
-                        </motion.div>
-                    ) : activeTab === 'Withdrawal' ? (
-                        <motion.div
-                            key="withdrawal"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <Withdrawal />
-                        </motion.div>
-                    ) : activeTab === 'Referral Network' ? (
-                        <motion.div
-                            key="referral"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.5 }}
-                        >
+                    ) : activeTab === 'Referral' ? (
+                        <motion.div key="referral" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <ReferralNetwork />
                         </motion.div>
-                    ) : activeTab === 'Transactions' ? (
-                        <motion.div
-                            key="transactions"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <Transactions />
+                    ) : activeTab === 'Level Income' ? (
+                        <motion.div key="income" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <LevelIncome />
                         </motion.div>
                     ) : activeTab === 'Profile' ? (
-                        <motion.div
-                            key="profile"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.5 }}
-                        >
+                        <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <Profile />
                         </motion.div>
-                    ) : (
-                        <motion.div
-                            key="other"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            style={{ padding: '2rem', textAlign: 'center' }}
-                        >
-                            <h2 className="gold-glow-text">{activeTab} Page</h2>
-                            <p style={{ color: '#9CA3AF', marginTop: '1rem' }}>Coming Soon...</p>
+                    ) : activeTab === 'Support' ? (
+                        <motion.div key="support" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <Support />
                         </motion.div>
+                    ) : (
+                        <div style={{ padding: '2rem' }}>Page Not Found</div>
                     )}
                 </AnimatePresence>
             </motion.main>
@@ -482,7 +575,7 @@ const Dashboard = () => {
                 )}
             </AnimatePresence>
 
-            <style jsx>{`
+            <style>{`
         .pulse-dot {
           width: 8px;
           height: 8px;
@@ -500,7 +593,7 @@ const Dashboard = () => {
           100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
         }
       `}</style>
-        </div>
+        </div >
     );
 };
 

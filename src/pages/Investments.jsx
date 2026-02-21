@@ -4,26 +4,25 @@ import {
     ArrowRight,
     Upload,
     Download,
-    Search,
-    Wallet,
     FileText,
     AlertCircle,
     ExternalLink,
-    ChevronRight
+    Activity
 } from 'lucide-react';
 import './Investments.css';
 
 const Investments = () => {
     const [amount, setAmount] = useState('');
     const [txId, setTxId] = useState('');
-    const [sponsorId, setSponsorId] = useState('Please connect wallet first');
+    const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
+    const [sponsorId, setSponsorId] = useState(user?.referredBy || 'System');
 
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: {
             opacity: 1,
             y: 0,
-            transition: { duration: 0.5, staggerChildren: 0.1 }
+            transition: { duration: 1.0, staggerChildren: 0.15, ease: [0.16, 1, 0.3, 1] }
         }
     };
 
@@ -32,16 +31,24 @@ const Investments = () => {
         visible: { opacity: 1, y: 0 }
     };
 
+    const investmentHistory = [];
+
     return (
         <div className="investments-container">
             <motion.div
                 className="page-header"
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-                <h1>Investment <span className="gold-glow-text">Plans</span></h1>
-                <p>Submit your investment request and start earning passive ROI.</p>
+                <div>
+                    <h1>Investment <span className="gold-glow-text">Plans</span></h1>
+                    <p>Submit your investment request and start earning passive ROI.</p>
+                </div>
+                <div className="active-scheme-tag">
+                    <Activity size={16} />
+                    <span>Phase 3 Live</span>
+                </div>
             </motion.div>
 
             <motion.div
@@ -97,7 +104,7 @@ const Investments = () => {
                         </motion.div>
 
                         <motion.div className="form-group" variants={itemVariants}>
-                            <label>Sponsor ID (Referrer's Wallet Address)</label>
+                            <label>Sponsor ID</label>
                             <div className="input-wrapper">
                                 <input
                                     type="text"
@@ -107,7 +114,7 @@ const Investments = () => {
                                     readOnly
                                 />
                             </div>
-                            <p className="input-helper">Your sponsor's wallet address (saved during signup)</p>
+                            <p className="input-helper">Auto-detected from your referrer</p>
                         </motion.div>
                     </div>
 
@@ -126,23 +133,25 @@ const Investments = () => {
                 </form>
             </motion.div>
 
-            {/* History Section Redesign */}
+            {/* History Section */}
             <motion.section
                 className="history-section"
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.8 }}
+                transition={{ delay: 0.8, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             >
                 <div className="history-header">
                     <h2>Investment <span className="gold-glow-text">History</span></h2>
-                    <motion.button
-                        className="export-btn"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Download size={18} />
-                        Export CSV
-                    </motion.button>
+                    <div className="history-actions">
+                        <motion.button
+                            className="export-btn"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <Download size={18} />
+                            Export CSV
+                        </motion.button>
+                    </div>
                 </div>
 
                 <div className="table-container">
@@ -159,35 +168,40 @@ const Investments = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {/* Rows will appear here */}
+                                {investmentHistory.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td style={{ fontWeight: '700' }}>{item.amount}</td>
+                                        <td>{item.date}</td>
+                                        <td><code>{item.txId}</code></td>
+                                        <td>
+                                            <span className={`status-pill ${item.status.toLowerCase()}`}>
+                                                {item.status}
+                                            </span>
+                                        </td>
+                                        <td>{item.approvedDate}</td>
+                                        <td>
+                                            <button className="action-btn-icon"><ExternalLink size={16} /></button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
 
-                    <motion.div
-                        className="empty-state"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.8 }}
-                    >
-                        <div className="empty-icon-wrapper">
-                            <motion.div
-                                animate={{ rotate: [0, 360] }}
-                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                style={{ position: 'absolute', inset: 0, border: '1px dashed rgba(255, 210, 0, 0.2)', borderRadius: '50%' }}
-                            />
-                            <FileText size={42} className="gold-glow-text" style={{ opacity: 0.5 }} />
-                        </div>
-                        <h3>No Investment History</h3>
-                        <p>Your investment records are waiting for your first move. Make an investment above to start your ROI journey today!</p>
-                        <motion.button
-                            className="btn-primary shimmer-btn explore-btn"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                    {investmentHistory.length === 0 && (
+                        <motion.div
+                            className="empty-state"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.8 }}
                         >
-                            Explore Our Plans
-                        </motion.button>
-                    </motion.div>
+                            <div className="empty-icon-wrapper">
+                                <FileText size={42} className="gold-glow-text" style={{ opacity: 0.5 }} />
+                            </div>
+                            <h3>No Investment History</h3>
+                            <p>Make an investment above to start your ROI journey today!</p>
+                        </motion.div>
+                    )}
                 </div>
             </motion.section>
         </div>
